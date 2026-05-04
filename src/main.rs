@@ -1,17 +1,9 @@
-mod cli;
-mod cloak;
-mod config;
-mod http;
-mod mail;
-mod mcp;
-
 use std::sync::Arc;
 
 use clap::Parser;
+use panorama_mail::{cli, config::AppConfig, http, mail::PanoramaMail, mcp};
 
 use cli::Commands;
-use config::AppConfig;
-use mail::PanoramaMail;
 
 #[tokio::main]
 async fn main() {

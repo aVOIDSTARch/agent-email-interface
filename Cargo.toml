@@ -3,6 +3,10 @@ name = "panorama-mail"
 version = "0.1.0"
 edition = "2024"
 
+[lib]
+name = "panorama_mail"
+path = "src/lib.rs"
+
 [[bin]]
 name = "panorama-mail"
 path = "src/main.rs"
@@ -22,3 +26,6 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 tower-http = { version = "0.6", features = ["trace"] }
 futures = "0.3"
+
+[dev-dependencies]
+dotenvy = "0.15"

@@ -25,6 +25,7 @@ impl PanoramaMail {
     }
 }
 
+#[allow(async_fn_in_trait)]
 pub trait AgentMailTransport {
     async fn send(&self, to: &str, subject: &str, body: &str) -> Result<(), MailError>;
     async fn fetch_unread(&self) -> Result<Vec<AgentMessage>, MailError>;

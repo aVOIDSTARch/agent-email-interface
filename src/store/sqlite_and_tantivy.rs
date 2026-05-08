@@ -42,6 +42,31 @@ pub struct SqliteTantivyStore {
     tantivy: Arc<TantivyInner>,
 }
 
+/// Acquire a Tantivy IndexWriter, automatically removing a stale lock file on first failure.
+///
+/// Tantivy leaves `.tantivy-writer.lock` behind when a process crashes. On `LockBusy` we
+/// delete the stale file (safe because it is empty — the actual data is in segments) and
+/// retry once. If another live instance holds the lock the retry will also fail.
+fn acquire_writer(index: &Index, index_path: &std::path::Path) -> Result<IndexWriter, StoreError> {
+    match index.writer(50_000_000) {
+        Ok(w) => Ok(w),
+        Err(e) if e.to_string().contains("LockBusy") => {
+            let lock = index_path.join(".tantivy-writer.lock");
+            if lock.exists() {
+                std::fs::remove_file(&lock)?;
+            }
+            index.writer(50_000_000).map_err(|e2| {
+                StoreError::Search(format!(
+                    "Tantivy index is locked at '{}'. \
+                     Stop all other panorama-mail processes and try again. ({e2})",
+                    index_path.display()
+                ))
+            })
+        }
+        Err(e) => Err(StoreError::Search(e.to_string())),
+    }
+}
+
 impl SqliteTantivyStore {
     /// Open (or create) a store at the given base directory.
     /// Creates `<base>/panorama.db` (SQLite) and `<base>/tantivy/` (search index).
@@ -96,9 +121,7 @@ impl SqliteTantivyStore {
         let reader = index
             .reader()
             .map_err(|e| StoreError::Search(e.to_string()))?;
-        let writer = index
-            .writer(50_000_000)
-            .map_err(|e| StoreError::Search(e.to_string()))?;
+        let writer = acquire_writer(&index, &index_path)?;
 
         Ok(Self {
             pool,

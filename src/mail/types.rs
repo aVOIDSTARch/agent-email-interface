@@ -17,6 +17,7 @@ pub struct AgentMessage {
     pub subject: Option<String>,
     pub from: Option<String>,
     pub to: Vec<String>,
+    pub date: Option<String>,
     pub body: Option<String>,
     pub html_body: Option<String>,
     pub attachments: Vec<Attachment>,

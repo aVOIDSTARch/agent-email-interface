@@ -4,3 +4,4 @@ pub mod config;
 pub mod http;
 pub mod mail;
 pub mod mcp;
+pub mod store;

@@ -5,6 +5,9 @@ use crate::mail::MailConfig;
 pub struct AppConfig {
     pub mail: MailConfig,
     pub http_port: u16,
+    /// Base directory for the local email store (SQLite + Tantivy index).
+    /// Set via STORE_PATH env var; defaults to ~/.panorama or ./.panorama.
+    pub store_path: String,
 }
 
 impl AppConfig {
@@ -33,6 +36,9 @@ impl AppConfig {
                 .ok()
                 .and_then(|v| v.parse().ok())
                 .unwrap_or(8420),
+            store_path: std::env::var("STORE_PATH")
+                .or_else(|_| std::env::var("HOME").map(|h| format!("{h}/.panorama")))
+                .unwrap_or_else(|_| ".panorama".to_string()),
         })
     }
 }

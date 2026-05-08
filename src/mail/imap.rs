@@ -29,6 +29,12 @@ fn parse_message(body: &[u8], uid: u32) -> Result<AgentMessage, MailError> {
                     .collect()
             })
             .unwrap_or_default(),
+        date: parsed.date().map(|d| {
+            format!(
+                "{}-{:02}-{:02}T{:02}:{:02}:{:02}",
+                d.year, d.month, d.day, d.hour, d.minute, d.second
+            )
+        }),
         body: parsed.body_text(0).map(|s| s.into_owned()),
         html_body: parsed.body_html(0).map(|s| s.into_owned()),
         attachments: vec![],

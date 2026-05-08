@@ -1,7 +1,10 @@
 use std::sync::Arc;
 
 use clap::Parser;
-use panorama_mail::{cli, config::AppConfig, http, mail::PanoramaMail, mcp};
+use panorama_mail::{
+    cli, config::AppConfig, http, mail::PanoramaMail, mcp,
+    store::{EmailStore, SqliteTantivyStore},
+};
 
 use cli::Commands;
 
@@ -16,7 +19,18 @@ async fn main() {
         std::process::exit(1);
     });
 
-    let mail = Arc::new(PanoramaMail::new(config.mail.clone()));
+    let store: Arc<dyn EmailStore> = Arc::new(
+        SqliteTantivyStore::open(&config.store_path)
+            .await
+            .unwrap_or_else(|e| {
+                eprintln!("Store init error: {e}");
+                std::process::exit(1);
+            }),
+    );
+
+    let mail = Arc::new(
+        PanoramaMail::new(config.mail.clone()).with_store(Arc::clone(&store)),
+    );
 
     match cli.command {
         Commands::Serve => http::serve(&config, Arc::clone(&mail)).await,

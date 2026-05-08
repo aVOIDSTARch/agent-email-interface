@@ -3,7 +3,7 @@ use std::sync::Arc;
 use serde_json::json;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 
-use crate::mail::PanoramaMail;
+use crate::{logger::SharedLogger, mail::PanoramaMail};
 
 use super::{
     protocol::{JsonRpcRequest, JsonRpcResponse},
@@ -12,15 +12,18 @@ use super::{
 
 pub struct McpServer {
     mail: Arc<PanoramaMail>,
+    logger: SharedLogger,
 }
 
 impl McpServer {
-    pub fn new(mail: Arc<PanoramaMail>) -> Self {
-        Self { mail }
+    pub fn new(mail: Arc<PanoramaMail>, logger: SharedLogger) -> Self {
+        Self { mail, logger }
     }
 
     pub async fn run(&mut self) {
-        eprintln!("panorama-mail MCP server running (JSON-RPC on stdio)");
+        self.logger
+            .info("panorama-mail MCP server running (JSON-RPC on stdio)");
+
         let mut reader = BufReader::new(tokio::io::stdin());
         let mut stdout = tokio::io::stdout();
         let mut line = String::new();
@@ -31,7 +34,7 @@ impl McpServer {
                 Ok(0) => break,
                 Ok(_) => {}
                 Err(e) => {
-                    eprintln!("stdin error: {e}");
+                    self.logger.error(&format!("stdin error: {e}"));
                     break;
                 }
             }

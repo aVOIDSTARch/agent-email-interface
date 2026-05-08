@@ -7,7 +7,12 @@ use std::sync::Arc;
 use axum::{middleware, routing::get, routing::post, Router};
 use tower_http::trace::TraceLayer;
 
-use crate::{cloak::middleware::cloak_auth, config::AppConfig, mail::PanoramaMail};
+use crate::{
+    cloak::middleware::cloak_auth,
+    config::AppConfig,
+    logger::SharedLogger,
+    mail::PanoramaMail,
+};
 
 use state::AppState;
 
@@ -26,10 +31,10 @@ pub fn build_router(mail: Arc<PanoramaMail>) -> Router {
         .with_state(state)
 }
 
-pub async fn serve(config: &AppConfig, mail: Arc<PanoramaMail>) {
+pub async fn serve(config: &AppConfig, mail: Arc<PanoramaMail>, logger: SharedLogger) {
     let app = build_router(mail);
     let addr = format!("0.0.0.0:{}", config.http_port);
-    tracing::info!("panorama-mail HTTP server listening on {}", addr);
+    logger.info(&format!("panorama-mail HTTP server listening on {addr}"));
     let listener = tokio::net::TcpListener::bind(&addr)
         .await
         .expect("failed to bind listener");

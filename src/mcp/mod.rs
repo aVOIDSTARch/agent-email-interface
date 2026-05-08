@@ -4,10 +4,10 @@ pub mod tools;
 
 use std::sync::Arc;
 
-use crate::mail::PanoramaMail;
+use crate::{logger::SharedLogger, mail::PanoramaMail};
 
 use server::McpServer;
 
-pub async fn run(mail: Arc<PanoramaMail>) {
-    McpServer::new(mail).run().await;
+pub async fn run(mail: Arc<PanoramaMail>, logger: SharedLogger) {
+    McpServer::new(mail, logger).run().await;
 }

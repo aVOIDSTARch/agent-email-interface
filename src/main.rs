@@ -1,23 +1,29 @@
 use std::sync::Arc;
 
 use clap::Parser;
+use dotenvy::dotenv;
 use panorama_mail::{
-    cli, config::AppConfig, http, mail::PanoramaMail, mcp,
+    cli, config::AppConfig, http, log_info, log_error,
+    logger::{LoguruLogger, SharedLogger},
+    mail::PanoramaMail, mcp,
     store::{EmailStore, SqliteTantivyStore},
 };
-use dotenvy::dotenv;
 
 use cli::Commands;
 
 #[tokio::main]
 async fn main() {
     dotenv().ok();
+
+    // ── Logger — swap LoguruLogger for any type that implements Logger ────────
+    let logger: SharedLogger = Arc::new(LoguruLogger::new());
+
     tracing_subscriber::fmt::init();
 
     let cli = cli::Cli::parse();
 
     let config = AppConfig::from_env().unwrap_or_else(|e| {
-        eprintln!("Config error: {e}");
+        log_error!(logger, "Config error: {e}");
         std::process::exit(1);
     });
 
@@ -25,7 +31,7 @@ async fn main() {
         SqliteTantivyStore::open(&config.store_path)
             .await
             .unwrap_or_else(|e| {
-                eprintln!("Store init error: {e}");
+                log_error!(logger, "Store init error: {e}");
                 std::process::exit(1);
             }),
     );
@@ -35,8 +41,12 @@ async fn main() {
     );
 
     match cli.command {
-        Commands::Serve => http::serve(&config, Arc::clone(&mail)).await,
-        Commands::Mcp => mcp::run(Arc::clone(&mail)).await,
+        Commands::Serve => {
+            http::serve(&config, Arc::clone(&mail), Arc::clone(&logger)).await;
+        }
+        Commands::Mcp => {
+            mcp::run(Arc::clone(&mail), Arc::clone(&logger)).await;
+        }
         Commands::Send { to, subject, body, json } => {
             cli::handlers::send(&mail, &to, &subject, &body, json).await;
         }
@@ -56,4 +66,6 @@ async fn main() {
             cli::handlers::mailboxes(&mail, json).await;
         }
     }
+
+    log_info!(logger, "panorama-mail exiting");
 }

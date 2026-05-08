@@ -46,18 +46,24 @@ impl McpServer {
 
             let response = match serde_json::from_str::<JsonRpcRequest>(trimmed) {
                 Ok(req) => self.handle(req).await,
-                Err(e) => JsonRpcResponse::err(None, -32700, format!("Parse error: {e}")),
+                Err(e) => Some(JsonRpcResponse::err(None, -32700, format!("Parse error: {e}"))),
             };
 
-            let mut out = serde_json::to_string(&response).unwrap_or_default();
-            out.push('\n');
-            let _ = stdout.write_all(out.as_bytes()).await;
-            let _ = stdout.flush().await;
+            if let Some(resp) = response {
+                let mut out = serde_json::to_string(&resp).unwrap_or_default();
+                out.push('\n');
+                let _ = stdout.write_all(out.as_bytes()).await;
+                let _ = stdout.flush().await;
+            }
         }
     }
 
-    async fn handle(&self, req: JsonRpcRequest) -> JsonRpcResponse {
-        match req.method.as_str() {
+    async fn handle(&self, req: JsonRpcRequest) -> Option<JsonRpcResponse> {
+        // JSON-RPC 2.0: notifications (no id) must never receive a response.
+        if req.id.is_none() {
+            return None;
+        }
+        Some(match req.method.as_str() {
             "initialize" => JsonRpcResponse::ok(
                 req.id,
                 json!({
@@ -69,7 +75,7 @@ impl McpServer {
                     }
                 }),
             ),
-            "notifications/initialized" | "ping" => JsonRpcResponse::ok(req.id, json!({})),
+            "ping" => JsonRpcResponse::ok(req.id, json!({})),
             "tools/list" => JsonRpcResponse::ok(
                 req.id,
                 json!({ "tools": build_tool_definitions() }),
@@ -86,6 +92,6 @@ impl McpServer {
                 -32601,
                 format!("Method not found: {}", method),
             ),
-        }
+        })
     }
 }

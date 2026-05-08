@@ -35,7 +35,7 @@ impl AppConfig {
             http_port: std::env::var("HTTP_PORT")
                 .ok()
                 .and_then(|v| v.parse().ok())
-                .unwrap_or(8420),
+                .unwrap_or(3500),
             store_path: std::env::var("STORE_PATH")
                 .or_else(|_| std::env::var("HOME").map(|h| format!("{h}/.panorama")))
                 .unwrap_or_else(|_| ".panorama".to_string()),

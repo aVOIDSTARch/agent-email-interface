@@ -34,6 +34,8 @@ pub enum Commands {
     Fetch {
         #[arg(long, help = "Output as JSON")]
         json: bool,
+        #[arg(long, value_name = "SECONDS", help = "Poll for new mail every N seconds (default 300 when flag is present)")]
+        fetch_timer: Option<u64>,
     },
     /// Search messages by subject or sender
     Search {

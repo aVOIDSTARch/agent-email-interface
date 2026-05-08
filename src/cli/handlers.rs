@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use crate::mail::{AgentMailTransport, AgentMessage, PanoramaMail};
 
 pub async fn send(mail: &PanoramaMail, to: &str, subject: &str, body: &str, json: bool) {
@@ -17,6 +19,17 @@ pub async fn fetch(mail: &PanoramaMail, json: bool) {
     match mail.fetch_unread().await {
         Ok(messages) => print_messages(messages, json),
         Err(e) => die(&e.to_string()),
+    }
+}
+
+pub async fn fetch_loop(mail: &PanoramaMail, json: bool, interval_secs: u64) {
+    let mut ticker = tokio::time::interval(Duration::from_secs(interval_secs));
+    loop {
+        ticker.tick().await;
+        match mail.fetch_unread().await {
+            Ok(messages) => print_messages(messages, json),
+            Err(e) => eprintln!("Error: {e}"),
+        }
     }
 }
 

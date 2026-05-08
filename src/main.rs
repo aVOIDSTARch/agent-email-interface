@@ -50,8 +50,11 @@ async fn main() {
         Commands::Send { to, subject, body, json } => {
             cli::handlers::send(&mail, &to, &subject, &body, json).await;
         }
-        Commands::Fetch { json } => {
-            cli::handlers::fetch(&mail, json).await;
+        Commands::Fetch { json, fetch_timer } => {
+            match fetch_timer {
+                Some(secs) => cli::handlers::fetch_loop(&mail, json, secs).await,
+                None => cli::handlers::fetch(&mail, json).await,
+            }
         }
         Commands::Search { query, json } => {
             cli::handlers::search(&mail, &query, json).await;

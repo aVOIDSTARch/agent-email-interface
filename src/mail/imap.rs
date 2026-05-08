@@ -57,7 +57,7 @@ pub async fn fetch_unread(config: &MailConfig) -> Result<Vec<AgentMessage>, Mail
         .collect::<Vec<_>>()
         .join(",");
 
-    let stream = session.uid_fetch(&uid_set, "RFC822").await?;
+    let stream = session.uid_fetch(&uid_set, "BODY.PEEK[]").await?;
     let fetches: Vec<_> = stream.try_collect().await?;
 
     let mut messages = Vec::new();
@@ -90,7 +90,7 @@ pub async fn search(config: &MailConfig, query: &str) -> Result<Vec<AgentMessage
         .collect::<Vec<_>>()
         .join(",");
 
-    let stream = session.uid_fetch(&uid_set, "RFC822").await?;
+    let stream = session.uid_fetch(&uid_set, "BODY.PEEK[]").await?;
     let fetches: Vec<_> = stream.try_collect().await?;
 
     let mut messages = Vec::new();
@@ -123,7 +123,7 @@ pub async fn get_by_uid(config: &MailConfig, uid: u32) -> Result<Option<AgentMes
     let mut session = open_session(config).await?;
     session.select(&config.mailbox).await?;
 
-    let stream = session.uid_fetch(format!("{}", uid), "RFC822").await?;
+    let stream = session.uid_fetch(format!("{}", uid), "BODY.PEEK[]").await?;
     let fetches: Vec<_> = stream.try_collect().await?;
 
     let result = fetches

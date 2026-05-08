@@ -121,8 +121,7 @@ pub async fn get_by_uid(config: &MailConfig, uid: u32) -> Result<Option<AgentMes
     let fetches: Vec<_> = stream.try_collect().await?;
 
     let result = fetches
-        .iter()
-        .next()
+        .first()
         .and_then(|f| f.body())
         .map(|body| parse_message(body, uid))
         .transpose()?;

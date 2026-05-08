@@ -20,6 +20,7 @@ impl McpServer {
     }
 
     pub async fn run(&mut self) {
+        eprintln!("panorama-mail MCP server running (JSON-RPC on stdio)");
         let mut reader = BufReader::new(tokio::io::stdin());
         let mut stdout = tokio::io::stdout();
         let mut line = String::new();

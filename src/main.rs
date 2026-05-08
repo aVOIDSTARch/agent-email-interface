@@ -5,11 +5,13 @@ use panorama_mail::{
     cli, config::AppConfig, http, mail::PanoramaMail, mcp,
     store::{EmailStore, SqliteTantivyStore},
 };
+use dotenvy::dotenv;
 
 use cli::Commands;
 
 #[tokio::main]
 async fn main() {
+    dotenv().ok();
     tracing_subscriber::fmt::init();
 
     let cli = cli::Cli::parse();
